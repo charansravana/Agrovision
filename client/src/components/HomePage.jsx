@@ -84,7 +84,7 @@ const App = () => {
     try {
         console.log("Uploading file:", file.name, "Size:", file.size);
         
-        const response = await axios.post("http://localhost:3000/predict", formData, {
+        const response = await axios.post("https://agrovision-h3fp.onrender.com/predict", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
