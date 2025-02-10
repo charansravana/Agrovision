@@ -4,6 +4,8 @@ const cors = require("cors");
 const multer = require("multer");
 const sharp = require("sharp");
 
+require("dotenv").config();
+
 const app = express();
 app.use(cors());
 
@@ -88,5 +90,5 @@ app.post("/predict", upload.single("file"), async (req, res) => {
 });
 
 // Start the server
-const PORT = 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
