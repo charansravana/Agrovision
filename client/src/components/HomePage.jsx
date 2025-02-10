@@ -18,7 +18,9 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [answer, setAnswer] = useState("");
 
-  let resultText = "ok";
+  const [resultText, setResultText] = useState("Loading...");
+
+
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -44,6 +46,33 @@ const App = () => {
     }
   };
 
+
+
+
+  function classPrediction(prediction) {
+    if (prediction[0].length > 1) {
+         prediction = prediction[0].indexOf(Math.max(...prediction[0]));
+    } else {
+        prediction =  prediction[0] > 0.5 ? 1 : 0;
+    }
+
+    return getPredictedClass(prediction)
+}
+
+
+  const getPredictedClass =(predictclass)=>{
+
+    if (predictclass === 0) {
+      return "Bacterial leaf blight";
+  } else if (predictclass === 1) {
+      return "Brown spot";
+  } else if (predictclass === 2) {
+      return "Leaf smut";
+  } else {
+      return "Healthy";
+  }
+
+  }
  
 
   const uploadImage = async (file) => {
@@ -53,7 +82,7 @@ const App = () => {
     try {
         console.log("Uploading file:", file.name, "Size:", file.size);
         
-        const response = await axios.post("http://localhost:5000/upload", formData, {
+        const response = await axios.post("http://localhost:3000/predict", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
@@ -68,12 +97,14 @@ const App = () => {
 
         console.log("Server response:", response.data);
 
-        if (response.data.success) {
-            console.log("Prediction received:", response.data.prediction);
-            return response.data.prediction;
-        } else {
-            throw new Error(response.data.error || "Upload failed");
-        }
+        if (response.data.prediction) {
+          console.log("Prediction received:", response.data.prediction);
+
+          return classPrediction(response.data.prediction);
+      } else {
+          throw new Error(response.data.error || "Upload failed");
+      }
+      
     } catch (error) {
         console.error("Error uploading image:", error);
         if (error.response) {
@@ -87,65 +118,38 @@ const App = () => {
         
         const errorMessage = error.response?.data?.error || error.message || "Failed to process image";
         console.error("Final error message:", errorMessage);
-        alert(`Error: ${errorMessage}`);
+        alert(`Error in uploadimage: ${errorMessage}`);
         return null;
     }
 };
 
+
 const handleRunModel = async () => {
-    if (!selectedImage) {
-        alert("Please select an image first!");
-        return;
-    }
+  if (!selectedImage) {
+      alert("Please select an image first!");
+      return;
+  }
 
-    if (isModelRun) {
-        return;
-    }
+  if (isModelRun) return;
 
-    // Show loading state
-    const result = document.getElementById("result");
-    result.style.display = "flex";
-    document.getElementById("typedText").innerHTML = "Processing image...";
+  document.getElementById("result").style.display = "flex";
 
-    try {
-        console.log("Starting image processing...");
-        const prediction = await uploadImage(selectedImage);
-        
-        if (prediction) {
-            console.log("Received prediction:", prediction);
-            resultText = prediction;
-            const typingSpeed = 80;
-            let index = 0;
+  try {
+      const prediction = await uploadImage(selectedImage);
+      if (!prediction) throw new Error("No prediction received.");
 
-            document.getElementById("typedText").innerHTML = "The disease is: ";
-            
-            function typeWriter() {
-                if (index < resultText.length) {
-                    document.getElementById("typedText").innerHTML +=
-                        resultText.charAt(index);
-                    index++;
-                    window.scrollTo({
-                        top: document.body.scrollHeight,
-                        behavior: "smooth",
-                    });
-                    setTimeout(typeWriter, typingSpeed);
-                } else {
-                    document.getElementById("typedText").style.animation = "none";
-                    const aiButton = document.getElementById("aiButton");
-                    aiButton.style.display = "flex";
-                }
-            }
+      console.log("Prediction:", prediction);
+      setResultText(prediction);
+      
+      setIsModelRun(true);
+      location.href = "./#result";
 
-            typeWriter();
-            setIsModelRun(true);
-            location.href = "./#result";
-        }
-    } catch (error) {
-        console.error("Error in handleRunModel:", error);
-        document.getElementById("typedText").innerHTML = 
-            "Error processing image. Please try again.";
-    }
+  } catch (error) {
+      console.error("Error in handleRunModel:", error);
+      document.getElementById("resultId").innerHTML = "Error processing image. Please try again.";
+  }
 };
+
 
 
 
@@ -293,15 +297,15 @@ async function runChatbot() {
       </div>
 
       <div
-        className="hidden p-10 rounded-xl shadow-xl w-full md:w-3/4 mt-10 justify-center items-center flex-col"
+        className="hidden p-10 rounded-xl shadow-xl w-full md:w-3/4 mt-10 justify-center  items-center flex-col"
         id="result"
       >
         <h1 className="text-2xl md:text-4xl mb-5 text-white font-extrabold">
           Result
         </h1>
         <h2
-          className="text-sm md:text-xl font-bold text-white m-5 typing"
-          id="typedText"
+          className="text-sm md:text-xl text-center font-bold text-white m-5 typing"
+          id="resultId"
         >
           The disease is: {resultText}
         </h2>
