@@ -8,8 +8,8 @@
     "onnxruntime-node": "^1.20.1",
     "sharp": "^0.33.5"
   },
-  "script": {
-    "start": "node server.js",
-    "build": "npm run build"
-  }
+  "scripts": {
+  "start": "node server.js"
+}
+
 }
