@@ -7,6 +7,8 @@ import magic from "/magic-wand-black.png";
 import support from "/headset-solid.png";
 import axios from "axios";
 
+import {motion} from "framer-motion";
+
 
 const GOOGLEAPI = import.meta.env.VITE_GOOGLEAPI;
 
@@ -133,6 +135,8 @@ const handleRunModel = async () => {
   if (isModelRun) return;
 
   document.getElementById("result").style.display = "flex";
+  document.getElementById("aiButton").style.display = "flex";
+
 
   try {
       const prediction = await uploadImage(selectedImage);
@@ -296,20 +300,30 @@ async function runChatbot() {
         </button>
       </div>
 
-      <div
+      <motion.div
+
+        initial={{ opacity: 0 , y: -40 }}
+        animate={{ opacity: 1 , y: 0 }}
+        transition={{ duration: 1 , delay: 0.9 }}
+
         className="hidden p-10 rounded-xl shadow-xl w-full md:w-3/4 mt-10 justify-center  items-center flex-col"
         id="result"
       >
         <h1 className="text-2xl md:text-4xl mb-5 text-white font-extrabold">
           Result
         </h1>
-        <h2
+        <motion.h2
+
+          initial={{ opacity: 0 , y: -20 }}
+          animate={{ opacity: 1 , y: 0 }}
+          transition={{ duration: 1 , delay: 0.5 }}
+
           className="text-sm md:text-xl text-center font-bold text-white m-5 typing"
           id="resultId"
         >
           The disease is: {resultText}
-        </h2>
-      </div>
+        </motion.h2>
+      </motion.div>
 
 
       <button 
