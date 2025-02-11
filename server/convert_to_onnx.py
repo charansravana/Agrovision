@@ -5,7 +5,7 @@ import tf2onnx
 
 tf.keras.backend.clear_session()  # Clear any existing Keras sessions
 
-model = tf.keras.models.load_model("model.h5")
+model = tf.keras.models.load_model("model-2.h5")
 
 # Set output names based on the last layer name or create a dummy name.
 if hasattr(model.layers[-1], 'name'):
