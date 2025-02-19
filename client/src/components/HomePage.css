@@ -1,0 +1,345 @@
+html {
+    scroll-behavior: smooth;
+  }
+  
+  .agro-logo {
+    margin-bottom: 50px;
+    width: 12rem;
+    cursor: pointer;
+    margin-top: 80px;
+  }
+  
+  .uploaded-image {
+    object-fit: fill;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+  
+  .homepage {
+    background: linear-gradient(to right, #d5e6da, #e8eeea, #eaffef);
+  
+  }
+  
+  .container {
+    background: linear-gradient(to right, #000000, #171616, #000000);
+    transition: filter 500ms;
+    filter: drop-shadow(0 0 5em #a3f5afaa);
+  
+  }
+  
+  .container:hover {
+    filter: drop-shadow(0 0 6em #71eb7daa);
+  }
+  
+  .file-upload {
+    display: inline-block;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .file-upload input {
+    display: none;
+  }
+  
+  .button {
+    width: 10vw;
+    height: 50px;
+    font-size: 16px;
+    font-weight: 800;
+    border-radius: 5px 15px 5px 15px;
+    /* background: linear-gradient(90deg, #3a0160 10%, #5f0aaf 90%);
+    border: 1px solid #691084;
+    box-shadow: #5b0974 0px 0px 10px; */
+  
+    background: linear-gradient(266deg, #28e548 10%, #89b831 90%);
+    border: 1px solid #ffffff;
+    box-shadow: #272627 0px 0px 10px;
+  
+    cursor: pointer;
+    transition: transform 3s ease;
+    transition: filter 300ms;
+  }
+  
+  .button:hover {
+    /* transform: scale(1.009); */
+    /* background: linear-gradient(90deg, #4e0182 10%, #6f0dcb 90%);
+    border: 1px solid #771196;
+    box-shadow: #760c97 0px 0px 10px; */
+  
+    background: linear-gradient(314deg, #1fe340 10%, #80b322 90%);
+    border: 1px solid #6eee29;
+    box-shadow: #434343 0px 0px 10px;
+    filter: drop-shadow(0 0 2em #0a9d1caa);
+  
+  }
+  
+  #result {
+    background: linear-gradient(to right, #000000, #101010, #000000);
+    display: none;
+    margin-bottom: 30px;
+    transition: filter 500ms;
+    filter: drop-shadow(0 0 4em #82eb92aa);
+  }
+
+  #result:hover {
+    filter: drop-shadow(0 0 4em #3dee4faa);
+  }
+  
+  .typing {
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    display: inline-block;
+  }
+  
+  .caret {
+    display: inline;
+    font-weight: bold;
+    animation: blink-caret 1s step-end infinite;
+  }
+  
+  @keyframes blink-caret {
+    from,
+    to {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+  
+  
+  
+  
+  
+  /*------------------------- media queries---------------------------------------------------------------------------------------------- */
+  
+  
+  /* 
+  @media only screen and (max-width: 320px){
+    nav img{
+      width: 1rem;
+      cursor: pointer;
+    }
+  
+  
+  
+    nav{
+      background-color: #000000;
+    }
+  
+    nav button{
+      color: rgb(0, 0, 0);
+      background-color: rgb(255, 255, 255);
+      margin-left: 1rem;
+      border-radius: 20px;
+      width: 6rem;
+      height: 2rem;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+    }
+  
+    .right-column h1{
+      font-size: 11rem;
+    }
+    .right-column h2{
+      font-size: 0.5rem;
+    }
+  
+    .container{
+      background-color: red;
+    }
+  
+    .homepage{
+      background: linear-gradient(to right, #000000, #171616, #000000);
+    }
+    #result{
+      background: linear-gradient(to right, #080808, #171616, #020202);
+    }
+  
+  } */
+  
+  
+  /* navbar */
+  
+  nav{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem 1rem 2rem;
+    width: 100%;
+    z-index: 100;
+  }
+  
+  nav img{
+    width: 10rem;
+    cursor: pointer;
+  }
+  
+  /* nav button{
+    color: white;
+    background-color: rgb(0, 0, 0);
+    border: none;
+    cursor: pointer;
+    margin-left: 1rem;
+    border-radius: 20px;
+    width: 6rem;
+    height: 2rem;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+  }
+   */
+  #aiButton{
+    margin-top: 20px;
+    margin-bottom: 40px;
+    background: linear-gradient(266deg, #28e548 10%, #89b831 90%);
+    border: none;
+    box-shadow: #5bec5b 0px 0px 10px;
+    width: 16rem;
+    gap: 10px;
+  }
+  
+  #aiButton:hover {
+    background: linear-gradient(314deg, #1fe340 10%, #80b322 90%);
+    border: none;
+    box-shadow: #82db99 0px 0px 10px;
+  }
+
+  #chatbot {
+    transition: filter 500ms;
+    filter: drop-shadow(0 0 5em #c777ecaa);
+  }
+  
+  #chatbot:hover {
+    filter: drop-shadow(0 0 5em #eb80c9aa);
+  }
+
+
+
+
+
+.login-button {
+    color: white;
+    background-color: rgb(0, 0, 0);
+    border: none;
+    cursor: pointer;
+    margin-left: 1rem;
+    border-radius: 20px;
+    width: 6rem;
+    padding: 7px;
+    /* height: 2rem; */
+    text-align: center;
+    
+    font-size: 15px;
+    font-weight: 700;
+}
+  
+ 
+  
+
+  /*------------------------------------ side bar ---------------------------------------------------------------------------------------*/
+
+
+
+  /* Sidebar icon button */
+.sidebar-icon {
+    color: rgb(0, 0, 0);
+    border: none;
+    cursor: pointer;
+    margin-right: 1rem;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.sidebar-icon-close{
+    color: rgb(255, 255, 255);
+    border: none;
+    cursor: pointer;
+    margin-left: 12rem;
+    margin-top: -27px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+
+/* Sidebar styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -300px; /* Initially hidden off-screen */
+  width: 300px;
+  height: 100%;
+  background-color: #000000;
+  color: rgb(255, 255, 255);
+  padding: 20px;
+  box-shadow: 5px 0 20px rgba(94, 255, 14, 0.61);
+  transition: right 0.3s ease-in-out;
+  z-index: 999;
+}
+
+/* Sidebar open state */
+.sidebar.open {
+  right: 0; /* Slide in from the right */
+}
+
+/* Menu bar inside the sidebar */
+.menu-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+/* User details styling */
+.user-details {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+/* Logout button styling */
+.logout-button {
+  background-color: #54f23f;
+  color: rgb(0, 0, 0);
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: 800;
+  font-size: 16px;
+  margin-top: 25rem;
+  align-self: flex-start;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #0de92a;
+}
+
+
+
+/*------------------------------------ newly added features ---------------------------------------------------------------------------------------*/
+
+
+.talktoexpert {
+
+  position: fixed; /* Ensures the element stays in place while scrolling */
+  bottom: 20px;    /* 20px from the bottom of the viewport */
+  right: 30px;
+  display: flex;
+  align-items: end;
+}
+
+
+
+.talktoexpert img{
+  width: 3rem;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  background:linear-gradient(90deg, #28e548 10%, #89b831 90%);
+}
