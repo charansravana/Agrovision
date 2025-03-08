@@ -62,70 +62,113 @@ const App = () => {
 }
 
 
-  const getPredictedClass =(predictclass)=>{
+// Fixed uploadImage function
+const uploadImage = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
 
-    if (predictclass === 0) {
-      return "Bacterial leaf blight";
-  } else if (predictclass === 1) {
-      return "Brown spot";
-  } else if (predictclass === 2) {
-      return "Leaf smut";
-  } else {
-      return "Healthy";
-  }
+  try {
+      console.log("Uploading file:", file.name, "Size:", file.size);
+      
+      const response = await axios.post("http://localhost:5000/predict", formData, {
+          headers: {
+              "Content-Type": "multipart/form-data",
+          },
+          timeout: 30000,
+          onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+              );
+              console.log(`Upload Progress: ${percentCompleted}%`);
+          },
+      });
 
-  }
- 
+      console.log("Server response:", response.data);
 
-  const uploadImage = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-        console.log("Uploading file:", file.name, "Size:", file.size);
-        
-        const response = await axios.post("https://agrovision-h3fp.onrender.com/predict", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-            timeout: 30000,
-            onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round(
-                    (progressEvent.loaded * 100) / progressEvent.total
-                );
-                console.log(`Upload Progress: ${percentCompleted}%`);
-            },
-        });
-
-        console.log("Server response:", response.data);
-
-        if (response.data.prediction) {
+      if (response.data.prediction) {
           console.log("Prediction received:", response.data.prediction);
-
-          return classPrediction(response.data.prediction);
+          // Return the prediction object directly
+          return response.data.prediction;
       } else {
           throw new Error(response.data.error || "Upload failed");
       }
+    
+  } catch (error) {
+      console.error("Error uploading image:", error);
+      if (error.response) {
+          console.error("Server response status:", error.response.status);
+          console.error("Server response data:", error.response.data);
+      } else if (error.request) {
+          console.error("No response received:", error.request);
+      } else {
+          console.error("Error setting up request:", error.message);
+      }
       
-    } catch (error) {
-        console.error("Error uploading image:", error);
-        if (error.response) {
-            console.error("Server response status:", error.response.status);
-            console.error("Server response data:", error.response.data);
-        } else if (error.request) {
-            console.error("No response received:", error.request);
-        } else {
-            console.error("Error setting up request:", error.message);
-        }
-        
-        const errorMessage = error.response?.data?.error || error.message || "Failed to process image";
-        console.error("Final error message:", errorMessage);
-        alert(`Error in uploadimage: ${errorMessage}`);
-        return null;
-    }
+      const errorMessage = error.response?.data?.error || error.message || "Failed to process image";
+      console.error("Final error message:", errorMessage);
+      alert(`Error in uploadimage: ${errorMessage}`);
+      return null;
+  }
 };
 
+// Fixed getPredictedClass function
+const getPredictedClass = (prediction) => {
+  // Add debugging to see exactly what's being passed
+  console.log("Prediction object received:", prediction);
+  
+  // Check if prediction is valid
+  if (!prediction || typeof prediction !== "object") {
+      console.error("Invalid prediction format:", prediction);
+      return null; // Return null instead of a string to check in handleRunModel
+  }
+  
+  // Convert to array of values
+  const predictionArray = Object.values(prediction);
+  
+  if (predictionArray.length === 0) {
+      console.error("Empty prediction array");
+      return null;
+  }
+  
+  // Find the maximum value
+  const maxValue = Math.max(...predictionArray);
+  console.log("Max probability:", maxValue);
+  
+  // Find the key (index) with this maximum value
+  let predictedIndex = null;
+  for (const [key, value] of Object.entries(prediction)) {
+      if (value === maxValue) {
+          predictedIndex = parseInt(key);
+          break;
+      }
+  }
+  
+  console.log("Predicted index:", predictedIndex);
+  
+  // Disease labels corresponding to model output classes
+  const diseaseLabels = [
+      "Bacterial leaf blight",
+      "Brown spot",
+      "Leaf smut",
+      "Healthy",
+      "Powdery Mildew",
+      "Bacterial Spot",
+      "Late Blight",
+      "Leaf Mold",
+      "Yellow Leaf Curl Virus"
+  ];
+  
+  // Check if the index is valid
+  if (predictedIndex !== null && !isNaN(predictedIndex) && 
+      predictedIndex >= 0 && predictedIndex < diseaseLabels.length) {
+      return diseaseLabels[predictedIndex];
+  } else {
+      console.error("Invalid index:", predictedIndex);
+      return null;
+  }
+};
 
+// Fixed handleRunModel function
 const handleRunModel = async () => {
   if (!selectedImage) {
       alert("Please select an image first!");
@@ -137,23 +180,30 @@ const handleRunModel = async () => {
   document.getElementById("result").style.display = "flex";
   document.getElementById("aiButton").style.display = "flex";
 
-
   try {
-      const prediction = await uploadImage(selectedImage);
-      if (!prediction) throw new Error("No prediction received.");
-
-      console.log("Prediction:", prediction);
-      setResultText(prediction);
+      const predictionData = await uploadImage(selectedImage);
+      console.log("Prediction data returned from uploadImage:", predictionData);
       
+      if (!predictionData) {
+          throw new Error("No prediction data received.");
+      }
+      
+      const result = getPredictedClass(predictionData);
+      console.log("Disease prediction result:", result);
+      
+      if (!result) {
+          throw new Error("Could not determine disease from prediction.");
+      }
+      
+      setResultText(result);
       setIsModelRun(true);
       location.href = "./#result";
 
   } catch (error) {
       console.error("Error in handleRunModel:", error);
-      document.getElementById("resultId").innerHTML = "Error processing image. Please try again.";
+      setResultText("Error processing image. Please try again.");
   }
 };
-
 
 
 
