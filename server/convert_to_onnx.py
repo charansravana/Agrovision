@@ -5,7 +5,7 @@ import tf2onnx
 
 tf.keras.backend.clear_session()  # Clear any existing Keras sessions
 
-model = tf.keras.models.load_model("model-2.h5")
+model = tf.keras.models.load_model("rice_leaf_model_v2.h5")
 
 # Set output names based on the last layer name or create a dummy name.
 if hasattr(model.layers[-1], 'name'):
@@ -22,7 +22,7 @@ onnx_model, _ = tf2onnx.convert.from_keras(
 )
 
 # Save the ONNX model
-with open("model.onnx", "wb") as f:
+with open("model_v2_charan.onnx", "wb") as f:
     f.write(onnx_model.SerializeToString())
 
 print("✅ Model converted successfully to ONNX!")

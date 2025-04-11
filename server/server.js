@@ -17,7 +17,7 @@ const upload = multer({ storage });
 let session;
 async function loadModel() {
     try {
-        session = await onnx.InferenceSession.create("model.onnx");
+        session = await onnx.InferenceSession.create("model_v2_charan.onnx");
         console.log("✅ ONNX Model Loaded!");
         console.log(`🟢 Model Input Name(s): ${session.inputNames}`);
         console.log(`🟢 Model Output Name(s): ${session.outputNames}`);
@@ -38,12 +38,12 @@ app.post("/predict", upload.single("file"), async (req, res) => {
 
         console.log("Received file:", req.file.originalname, "Size:", req.file.size);
 
-        // Change target dimensions to match model expected size: 150x150
-        const targetWidth = 150;
-        const targetHeight = 150;
+        // Correcting the target dimensions to match the model's expected input (224x224)
+        const targetWidth = 224;
+        const targetHeight = 224;
 
         // Preprocess the image using sharp:
-        // - Resize to 150x150
+        // - Resize to 224x224
         // - Convert to PNG and remove any alpha channel
         // - Extract raw pixel data in HWC order (Height, Width, Channels)
         const resizedImageBuffer = await sharp(req.file.buffer)
@@ -87,6 +87,16 @@ app.post("/predict", upload.single("file"), async (req, res) => {
         console.error(error);
         res.status(500).json({ error: "Error processing prediction" });
     }
+});
+
+app.get("/", (req, res) => {
+    res.send("Welcome to the ONNX Model Prediction API!");
+
+    
+res.json({
+        message: "Welcome to the ONNX Model Prediction API!",
+        availableEndpoints: ["/predict"],
+    });
 });
 
 // Start the server

@@ -51,25 +51,27 @@ const App = () => {
 
 
 
-  function classPrediction(prediction) {
-    if (prediction[0].length > 1) {
-         prediction = prediction[0].indexOf(Math.max(...prediction[0]));
-    } else {
-        prediction =  prediction[0] > 0.5 ? 1 : 0;
-    }
+//   function classPrediction(prediction) {
+//     if (prediction[0].length > 1) {
+//          prediction = prediction[0].indexOf(Math.max(...prediction[0]));
+//     } else {
+//         prediction =  prediction[0] > 0.5 ? 1 : 0;
+//     }
 
-    return getPredictedClass(prediction)
-}
+//     return getPredictedClass(prediction)
+// }
 
 
-// Fixed uploadImage function
 const uploadImage = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
 
+  console.log("Uploading image:", file);
+
+
   try {
       console.log("Uploading file:", file.name, "Size:", file.size);
-      
+
       const response = await axios.post("http://localhost:5000/predict", formData, {
           headers: {
               "Content-Type": "multipart/form-data",
@@ -85,90 +87,85 @@ const uploadImage = async (file) => {
 
       console.log("Server response:", response.data);
 
-      if (response.data.prediction) {
+      if (response.data?.prediction) {
           console.log("Prediction received:", response.data.prediction);
-          // Return the prediction object directly
-          return response.data.prediction;
+          return response.data.prediction; // Ensure we're returning the prediction object
       } else {
-          throw new Error(response.data.error || "Upload failed");
+          throw new Error(response.data?.error || "Upload failed");
       }
-    
   } catch (error) {
       console.error("Error uploading image:", error);
-      if (error.response) {
-          console.error("Server response status:", error.response.status);
-          console.error("Server response data:", error.response.data);
-      } else if (error.request) {
-          console.error("No response received:", error.request);
-      } else {
-          console.error("Error setting up request:", error.message);
-      }
-      
       const errorMessage = error.response?.data?.error || error.message || "Failed to process image";
       console.error("Final error message:", errorMessage);
-      alert(`Error in uploadimage: ${errorMessage}`);
+      alert(`Error in uploadImage: ${errorMessage}`);
       return null;
   }
 };
 
-// Fixed getPredictedClass function
+// Updated getPredictedClass function
 const getPredictedClass = (prediction) => {
-  // Add debugging to see exactly what's being passed
   console.log("Prediction object received:", prediction);
-  
-  // Check if prediction is valid
+
   if (!prediction || typeof prediction !== "object") {
-      console.error("Invalid prediction format:", prediction);
-      return null; // Return null instead of a string to check in handleRunModel
+    console.error("Invalid prediction format:", prediction);
+    return "Error: Invalid prediction data";
   }
-  
-  // Convert to array of values
+
+  // Convert prediction object to an array
   const predictionArray = Object.values(prediction);
-  
-  if (predictionArray.length === 0) {
-      console.error("Empty prediction array");
-      return null;
+  if (!predictionArray.length) {
+    console.error("Empty prediction array");
+    return "Error: No prediction available";
   }
-  
-  // Find the maximum value
-  const maxValue = Math.max(...predictionArray);
-  console.log("Max probability:", maxValue);
-  
-  // Find the key (index) with this maximum value
-  let predictedIndex = null;
-  for (const [key, value] of Object.entries(prediction)) {
-      if (value === maxValue) {
-          predictedIndex = parseInt(key);
-          break;
-      }
-  }
-  
-  console.log("Predicted index:", predictedIndex);
-  
-  // Disease labels corresponding to model output classes
+
+  // Get top 2 probabilities and their indices
+  const sortedPredictions = predictionArray
+    .map((prob, index) => ({ prob, index }))
+    .sort((a, b) => b.prob - a.prob); // Sort descending
+
+  const topProb = sortedPredictions[0].prob;
+  const topIndex = sortedPredictions[0].index;
+  const secondProb = sortedPredictions[1].prob;
+  const secondIndex = sortedPredictions[1].index;
+
+  console.log("Top probability:", topProb, "at index:", topIndex);
+  console.log("Second probability:", secondProb, "at index:", secondIndex);
+
+  // Disease labels
   const diseaseLabels = [
-      "Bacterial leaf blight",
-      "Brown spot",
-      "Leaf smut",
-      "Healthy",
-      "Powdery Mildew",
-      "Bacterial Spot",
-      "Late Blight",
-      "Leaf Mold",
-      "Yellow Leaf Curl Virus"
+    "Bacterial leaf blight", "Brown spot", "Leaf smut", "Healthy",
+    "Powdery Mildew", "Bacterial Spot", "Late Blight", "Leaf Mold",
+    "Yellow Leaf Curl Virus", "Rust", "Mosaic Virus", "Downy Mildew",
+    "Anthracnose", "Fusarium Wilt", "Septoria Leaf Spot", "Canker",
+    "Gummosis", "Wilt Disease", "Damping Off", "Root Rot",
+    "Blossom End Rot", "Scab", "Verticillium Wilt", "Crown Gall",
+    "Nematode Damage", "Sooty Mold", "Shot Hole", "Sclerotinia Rot",
+    "Sunburn", "Pink Mold", "Charcoal Rot", "Bacterial Wilt",
+    "Algal Leaf Spot", "Phytophthora Blight", "Leaf Curl",
+    "Purple Blotch", "Galls", "Alternaria Leaf Spot"
   ];
-  
-  // Check if the index is valid
-  if (predictedIndex !== null && !isNaN(predictedIndex) && 
-      predictedIndex >= 0 && predictedIndex < diseaseLabels.length) {
-      return diseaseLabels[predictedIndex];
+
+  const confidenceThreshold = 0.5;
+  const closeThreshold = 0.005; // Define "close" as within 0.005 difference
+
+  if (topProb < confidenceThreshold) {
+    // Check if top two are very close
+    if (topProb - secondProb < closeThreshold) {
+      console.log("Top two probabilities are close; considering second guess.");
+      return ` ${diseaseLabels[topIndex]} (${topProb.toFixed(6)})`;
+    }
+    return `Uncertain (low confidence): ${diseaseLabels[topIndex]} (${topProb.toFixed(6)})`;
+  }
+
+  if (topIndex >= 0 && topIndex < diseaseLabels.length) {
+    return diseaseLabels[topIndex];
   } else {
-      console.error("Invalid index:", predictedIndex);
-      return null;
+    console.error("Invalid index:", topIndex);
+    return "Unknown Disease";
   }
 };
 
-// Fixed handleRunModel function
+// Updated handleRunModel function
 const handleRunModel = async () => {
   if (!selectedImage) {
       alert("Please select an image first!");
@@ -183,22 +180,21 @@ const handleRunModel = async () => {
   try {
       const predictionData = await uploadImage(selectedImage);
       console.log("Prediction data returned from uploadImage:", predictionData);
-      
+
       if (!predictionData) {
           throw new Error("No prediction data received.");
       }
-      
+
       const result = getPredictedClass(predictionData);
       console.log("Disease prediction result:", result);
-      
+
       if (!result) {
           throw new Error("Could not determine disease from prediction.");
       }
-      
+
       setResultText(result);
       setIsModelRun(true);
       location.href = "./#result";
-
   } catch (error) {
       console.error("Error in handleRunModel:", error);
       setResultText("Error processing image. Please try again.");
@@ -224,38 +220,47 @@ const handleRunModel = async () => {
 
 
 
-async function runChatbot() {
+  async function runChatbot() {
+    let question = "suggest how to cure the following disease of crops : " + resultText + 
+      " . give accurate answers and don't say that i can't give answer , try atleast . " +
+      "Don't give lengthy answer , just give a brief summary in short way within a few sentences . Don't use font styling like making bold or anything , make the font simple . don't use \"*\" symbol instead use 1,2,3... " +
+      "for points and try to answer in a multiple short paragraphs way but not points, use plain english";
   
-  let question="suggest how to cure the following disease of crops : "+resultText+" give accurate answers and don't say tha ti can't give answer , try atleast . Don't give lengthy answer , just give a brief summary . don't use * symbol instead use 1,2,3... for points and try to answer in a multiple short paragraphs way but not points, use plain english";
+    setTimeout(async () => {
+      const chatbot = document.getElementById("chatbot");
+      chatbot.style.display = "flex";
+      setAnswer("Loading...");
+      location.href = './#chatbot';
   
-  // Use a timeout to ensure the state is updated before the API call
-  setTimeout(async () => {
-    const chatbot = document.getElementById("chatbot");
-    chatbot.style.display = "flex";
-    setAnswer("Loading...");
-    location.href='./#chatbot'
-    
-    try {
-      const response = await axios({
-        url:GOOGLEAPI,
-        method: "POST",
-        data: {
-          contents: [{ parts: [{ text: question }] }],
-        },
-      });
-
-
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-
-      setAnswer(response ["data"]["candidates"][0]["content"]["parts"][0]["text"]);
-      
-    } catch (error) {
-      setAnswer("Error fetching response");
-    }
-  }, 100); // Wait 100ms for state to update
-
-}
-
+      try {
+        const response = await axios({
+          url: GOOGLEAPI, // Should be set above as your full endpoint with ?key=...
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          data: {
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: question }]
+              }
+            ]
+          }
+        });
+  
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  
+        const answer = response.data.candidates[0].content.parts[0].text;
+        setAnswer(answer);
+  
+      } catch (error) {
+        console.error(error.response?.data || error.message); // Debug info
+        setAnswer("Error fetching response");
+      }
+    }, 100);
+  }
+  
 
 
   return (
