@@ -50,18 +50,6 @@ const App = () => {
 
 
 
-
-//   function classPrediction(prediction) {
-//     if (prediction[0].length > 1) {
-//          prediction = prediction[0].indexOf(Math.max(...prediction[0]));
-//     } else {
-//         prediction =  prediction[0] > 0.5 ? 1 : 0;
-//     }
-
-//     return getPredictedClass(prediction)
-// }
-
-
 const uploadImage = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
