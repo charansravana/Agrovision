@@ -134,7 +134,7 @@ const getPredictedClass = (prediction) => {
   // Disease labels
   const diseaseLabels = [
     "Bacterial leaf blight", "Brown spot", "Leaf smut", "Healthy",
-    "Powdery Mildew", "Bacterial Spot", "Late Blight", "Leaf Mold",
+    "Powdery Mildew", "Bacterial Blight", "Late Blight", "Leaf Mold",
     "Yellow Leaf Curl Virus", "Rust", "Mosaic Virus", "Downy Mildew",
     "Anthracnose", "Fusarium Wilt", "Septoria Leaf Spot", "Canker",
     "Gummosis", "Wilt Disease", "Damping Off", "Root Rot",
