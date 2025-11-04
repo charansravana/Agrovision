@@ -120,18 +120,7 @@ const getPredictedClass = (prediction) => {
   console.log("Second probability:", secondProb, "at index:", secondIndex);
 
   // Disease labels
-  const diseaseLabels = [
-    "Bacterial leaf blight", "Brown spot", "Leaf smut", "Healthy",
-    "Powdery Mildew", "Bacterial Blight", "Late Blight", "Leaf Mold",
-    "Yellow Leaf Curl Virus", "Rust", "Mosaic Virus", "Downy Mildew",
-    "Anthracnose", "Fusarium Wilt", "Septoria Leaf Spot", "Canker",
-    "Gummosis", "Wilt Disease", "Damping Off", "Root Rot",
-    "Blossom End Rot", "Scab", "Verticillium Wilt", "Crown Gall",
-    "Nematode Damage", "Sooty Mold", "Shot Hole", "Sclerotinia Rot",
-    "Sunburn", "Pink Mold", "Charcoal Rot", "Bacterial Wilt",
-    "Algal Leaf Spot", "Phytophthora Blight", "Leaf Curl",
-    "Purple Blotch", "Galls", "Alternaria Leaf Spot"
-  ];
+  const diseaseLabels = ['bacterial_leaf_blight', 'brown_spot', 'healthy', 'leaf_blast', 'leaf_scald', 'narrow_brown_spot', 'neck_blast', 'rice_hispa', 'sheath_blight', 'tungro'];
 
   const confidenceThreshold = 0.5;
   const closeThreshold = 0.005; // Define "close" as within 0.005 difference
