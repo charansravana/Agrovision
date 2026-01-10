@@ -7,11 +7,9 @@ import magic from "/magic-wand-black.png";
 import support from "/headset-solid.png";
 import axios from "axios";
 
-import {motion} from "framer-motion";
-
+import { motion } from "framer-motion";
 
 const GOOGLEAPI = import.meta.env.VITE_GOOGLEAPI;
-
 
 const App = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -21,8 +19,6 @@ const App = () => {
   const [answer, setAnswer] = useState("");
 
   const [resultText, setResultText] = useState("Loading...");
-
-
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -48,137 +44,159 @@ const App = () => {
     }
   };
 
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
+    console.log("Uploading image:", file);
 
-const uploadImage = async (file) => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  console.log("Uploading image:", file);
-
-
-  try {
+    try {
       console.log("Uploading file:", file.name, "Size:", file.size);
 
-      const response = await axios.post("https://agrovision-h3fp.onrender.com/predict", formData, {
+      const response = await axios.post(
+        "https://agrovision-h3fp.onrender.com/predict",
+        formData,
+        {
           headers: {
-              "Content-Type": "multipart/form-data",
+            "Content-Type": "multipart/form-data",
           },
-          timeout: 30000,
+          timeout: 120000, // Increased to 120 seconds (2 minutes) for model inference
           onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
-              );
-              console.log(`Upload Progress: ${percentCompleted}%`);
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            console.log(`Upload Progress: ${percentCompleted}%`);
           },
-      });
+        }
+      );
 
       console.log("Server response:", response.data);
 
       if (response.data?.prediction) {
-          console.log("Prediction received:", response.data.prediction);
-          return response.data.prediction; // Ensure we're returning the prediction object
+        console.log("Prediction received:", response.data.prediction);
+        return response.data.prediction; // Ensure we're returning the prediction object
       } else {
-          throw new Error(response.data?.error || "Upload failed");
+        throw new Error(response.data?.error || "Upload failed");
       }
-  } catch (error) {
+    } catch (error) {
       console.error("Error uploading image:", error);
-      const errorMessage = error.response?.data?.error || error.message || "Failed to process image";
+      let errorMessage = "Failed to process image";
+      
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = "Request timed out. The image processing is taking longer than expected. Please try again with a smaller image or check your connection.";
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       console.error("Final error message:", errorMessage);
       alert(`Error in uploadImage: ${errorMessage}`);
       return null;
-  }
-};
-
-// Updated getPredictedClass function
-const getPredictedClass = (prediction) => {
-  console.log("Prediction object received:", prediction);
-
-  if (!prediction || typeof prediction !== "object") {
-    console.error("Invalid prediction format:", prediction);
-    return "Error: Invalid prediction data";
-  }
-
-  // Convert prediction object to an array
-  const predictionArray = Object.values(prediction);
-  if (!predictionArray.length) {
-    console.error("Empty prediction array");
-    return "Error: No prediction available";
-  }
-
-  // Get top 2 probabilities and their indices
-  const sortedPredictions = predictionArray
-    .map((prob, index) => ({ prob, index }))
-    .sort((a, b) => b.prob - a.prob); // Sort descending
-
-  const topProb = sortedPredictions[0].prob;
-  const topIndex = sortedPredictions[0].index;
-  const secondProb = sortedPredictions[1].prob;
-  const secondIndex = sortedPredictions[1].index;
-
-  console.log("Top probability:", topProb, "at index:", topIndex);
-  console.log("Second probability:", secondProb, "at index:", secondIndex);
-
-  // Disease labels
-  const diseaseLabels = ['bacterial_leaf_blight', 'brown_spot', 'healthy', 'leaf_blast', 'leaf_scald', 'narrow_brown_spot', 'neck_blast', 'rice_hispa', 'sheath_blight', 'tungro'];
-
-  const confidenceThreshold = 0.5;
-  const closeThreshold = 0.005; // Define "close" as within 0.005 difference
-
-  if (topProb < confidenceThreshold) {
-    // Check if top two are very close
-    if (topProb - secondProb < closeThreshold) {
-      console.log("Top two probabilities are close; considering second guess.");
-      return ` ${diseaseLabels[topIndex]} (${topProb.toFixed(6)})`;
     }
-    return `Uncertain (low confidence): ${diseaseLabels[topIndex]} (${topProb.toFixed(6)})`;
-  }
+  };
 
-  if (topIndex >= 0 && topIndex < diseaseLabels.length) {
-    return diseaseLabels[topIndex];
-  } else {
-    console.error("Invalid index:", topIndex);
-    return "Unknown Disease";
-  }
-};
+  // Updated getPredictedClass function
+  const getPredictedClass = (prediction) => {
+    console.log("Prediction object received:", prediction);
 
-// Updated handleRunModel function
-const handleRunModel = async () => {
-  if (!selectedImage) {
+    if (!prediction || typeof prediction !== "object") {
+      console.error("Invalid prediction format:", prediction);
+      return "Error: Invalid prediction data";
+    }
+
+    // Convert prediction object to an array
+    const predictionArray = Object.values(prediction);
+    if (!predictionArray.length) {
+      console.error("Empty prediction array");
+      return "Error: No prediction available";
+    }
+
+    // Get top 2 probabilities and their indices
+    const sortedPredictions = predictionArray
+      .map((prob, index) => ({ prob, index }))
+      .sort((a, b) => b.prob - a.prob); // Sort descending
+
+    const topProb = sortedPredictions[0].prob;
+    const topIndex = sortedPredictions[0].index;
+    const secondProb = sortedPredictions[1].prob;
+    const secondIndex = sortedPredictions[1].index;
+
+    console.log("Top probability:", topProb, "at index:", topIndex);
+    console.log("Second probability:", secondProb, "at index:", secondIndex);
+
+    // Disease labels
+    const diseaseLabels = [
+      "Bacterial Leaf Blight",
+      "Brown Spot",
+      "Healthy Rice Leaf",
+      "Leaf Blast",
+      "Leaf scald",
+      "Narrow Brown Leaf Spot",
+      "Neck_Blast",
+      "Rice Hispa",
+      "Sheath Blight",
+    ];
+
+    const confidenceThreshold = 0.5;
+    const closeThreshold = 0.005; // Define "close" as within 0.005 difference
+
+    if (topProb < confidenceThreshold) {
+      // Check if top two are very close
+      if (topProb - secondProb < closeThreshold) {
+        console.log(
+          "Top two probabilities are close; considering second guess."
+        );
+        return ` ${diseaseLabels[topIndex]} (${topProb.toFixed(6)})`;
+      }
+      return `Uncertain (low confidence): ${
+        diseaseLabels[topIndex]
+      } (${topProb.toFixed(6)})`;
+    }
+
+    if (topIndex >= 0 && topIndex < diseaseLabels.length) {
+      return diseaseLabels[topIndex];
+    } else {
+      console.error("Invalid index:", topIndex);
+      return "Unknown Disease";
+    }
+  };
+
+  // Updated handleRunModel function
+  const handleRunModel = async () => {
+    if (!selectedImage) {
       alert("Please select an image first!");
       return;
-  }
+    }
 
-  if (isModelRun) return;
+    if (isModelRun) return;
 
-  document.getElementById("result").style.display = "flex";
-  document.getElementById("aiButton").style.display = "flex";
+    document.getElementById("result").style.display = "flex";
+    document.getElementById("aiButton").style.display = "flex";
 
-  try {
+    try {
       const predictionData = await uploadImage(selectedImage);
       console.log("Prediction data returned from uploadImage:", predictionData);
 
       if (!predictionData) {
-          throw new Error("No prediction data received.");
+        throw new Error("No prediction data received.");
       }
 
       const result = getPredictedClass(predictionData);
       console.log("Disease prediction result:", result);
 
       if (!result) {
-          throw new Error("Could not determine disease from prediction.");
+        throw new Error("Could not determine disease from prediction.");
       }
 
       setResultText(result);
       setIsModelRun(true);
       location.href = "./#result";
-  } catch (error) {
+    } catch (error) {
       console.error("Error in handleRunModel:", error);
       setResultText("Error processing image. Please try again.");
-  }
-};
-
-
+    }
+  };
 
   useEffect(() => {
     const handleKeyUp = (event) => {
@@ -194,51 +212,50 @@ const handleRunModel = async () => {
     };
   }, [selectedImage, isModelRun]);
 
-
-
-
   async function runChatbot() {
-    let question = "suggest how to cure the following disease of crops : " + resultText + 
+    let question =
+      "suggest how to cure the following disease of crops : " +
+      resultText +
       " . give accurate answers and don't say that i can't give answer , try atleast . " +
       "Don't give lengthy answer , just give a brief summary in short way within a few sentences . Don't use font styling like making bold or anything , make the font simple . don't use \"*\" symbol instead use 1,2,3... " +
       "for points and try to answer in a multiple short paragraphs way but not points, use plain english";
-  
+
     setTimeout(async () => {
       const chatbot = document.getElementById("chatbot");
       chatbot.style.display = "flex";
       setAnswer("Loading...");
-      location.href = './#chatbot';
-  
+      location.href = "./#chatbot";
+
       try {
         const response = await axios({
           url: GOOGLEAPI, // Should be set above as your full endpoint with ?key=...
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           data: {
             contents: [
               {
                 role: "user",
-                parts: [{ text: question }]
-              }
-            ]
-          }
+                parts: [{ text: question }],
+              },
+            ],
+          },
         });
-  
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  
+
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
+
         const answer = response.data.candidates[0].content.parts[0].text;
         setAnswer(answer);
-  
       } catch (error) {
         console.error(error.response?.data || error.message); // Debug info
         setAnswer("Error fetching response");
       }
     }, 100);
   }
-  
-
 
   return (
     <div className="min-h-screen flex flex-col items-center homepage">
@@ -333,11 +350,9 @@ const handleRunModel = async () => {
       </div>
 
       <motion.div
-
-        initial={{ opacity: 0 , y: -40 }}
-        animate={{ opacity: 1 , y: 0 }}
-        transition={{ duration: 1 , delay: 0.9 }}
-
+        initial={{ opacity: 0, y: -40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.9 }}
         className="hidden p-10 rounded-xl shadow-xl w-full md:w-3/4 mt-10 justify-center  items-center flex-col"
         id="result"
       >
@@ -345,11 +360,9 @@ const handleRunModel = async () => {
           Result
         </h1>
         <motion.h2
-
-          initial={{ opacity: 0 , y: -20 }}
-          animate={{ opacity: 1 , y: 0 }}
-          transition={{ duration: 1 , delay: 0.5 }}
-
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
           className="text-sm md:text-xl text-center font-bold text-white m-5 typing"
           id="resultId"
         >
@@ -357,23 +370,32 @@ const handleRunModel = async () => {
         </motion.h2>
       </motion.div>
 
-
-      <button 
-            onClick={runChatbot}
-            className="hidden w-2/3 md:w-1/3 h-12 font-extrabold button flex-row justify-center items-center"
-            id="aiButton" >
-            Ask AI for solution <span><img src={magic} alt="" className="size-4" /></span>
+      <button
+        onClick={runChatbot}
+        className="hidden w-2/3 md:w-1/3 h-12 font-extrabold button flex-row justify-center items-center"
+        id="aiButton"
+      >
+        Ask AI for solution{" "}
+        <span>
+          <img src={magic} alt="" className="size-4" />
+        </span>
       </button>
 
-      <div className="hidden p-10 mb-20 rounded-xl shadow-xl w-full md:w-3/4 mt-10 justify-center items-center flex-col bg-gradient-to-r from-purple-900 to-indigo-900" id="chatbot">
-        <h1 className="text-2xl md:text-4xl mb-5 text-black font-extrabold flex flex-row justify-center items-center gap-5">Agrovision AI <span><img src={magic} alt="magic" className="size-8" /></span></h1>
+      <div
+        className="hidden p-10 mb-20 rounded-xl shadow-xl w-full md:w-3/4 mt-10 justify-center items-center flex-col bg-gradient-to-r from-purple-900 to-indigo-900"
+        id="chatbot"
+      >
+        <h1 className="text-2xl md:text-4xl mb-5 text-black font-extrabold flex flex-row justify-center items-center gap-5">
+          Agrovision AI{" "}
+          <span>
+            <img src={magic} alt="magic" className="size-8" />
+          </span>
+        </h1>
 
-       
-
-        <h2 className="text-sm md:text-xl font-bold text-white m-5 typing">{answer}</h2>
+        <h2 className="text-sm md:text-xl font-bold text-white m-5 typing">
+          {answer}
+        </h2>
       </div>
-
-
     </div>
   );
 };
