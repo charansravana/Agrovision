@@ -7,7 +7,24 @@ const sharp = require("sharp");
 require("dotenv").config();
 
 const app = express();
-app.use(cors());
+
+// CORS configuration for both local and production
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://agrovision-client.onrender.com",
+    "https://agrovision.onrender.com",
+    "https://agrovision-server.onrender.com",
+    /\.onrender\.com$/,
+    /\.vercel\.app$/,
+    /\.netlify\.app$/,
+  ],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 // Increase body parser limits for large images
 app.use(express.json({ limit: "50mb" }));
@@ -26,7 +43,7 @@ const upload = multer({
 let session;
 async function loadModel() {
   try {
-    session = await onnx.InferenceSession.create("model.onnx");
+    session = await onnx.InferenceSession.create("old_model_v2_charan.onnx");
     console.log("✅ ONNX Model Loaded!");
     console.log(`🟢 Model Input Name(s): ${session.inputNames}`);
     console.log(`🟢 Model Output Name(s): ${session.outputNames}`);
@@ -53,7 +70,7 @@ app.post("/predict", upload.single("file"), async (req, res) => {
       "Received file:",
       req.file.originalname,
       "Size:",
-      req.file.size
+      req.file.size,
     );
 
     // Correcting the target dimensions to match the model's expected input (224x224)
@@ -78,20 +95,20 @@ app.post("/predict", upload.single("file"), async (req, res) => {
         "Unexpected image data length:",
         resizedImageBuffer.length,
         "expected:",
-        numPixels
+        numPixels,
       );
       return res.status(400).json({ error: "Unexpected image data length" });
     }
 
     // Normalize pixel values (0-255 to 0-1) and store in a Float32Array.
-    // The raw pixel data is in HWC order, which is what the model expects.
+    // The raw pixel data is in HWC order.
     const floatArray = new Float32Array(numPixels);
     for (let i = 0; i < numPixels; i++) {
       floatArray[i] = resizedImageBuffer[i] / 255.0;
     }
 
-    // Create an ONNX tensor with the expected shape [1, targetHeight, targetWidth, 3]
-    // Note: The tensor constructor signature is: new onnx.Tensor(type, data, dims)
+    // Create an ONNX tensor with shape [1, 224, 224, 3] (batch, height, width, channels)
+    // The model expects a 4D image input in NHWC format
     const tensorInput = new onnx.Tensor("float32", floatArray, [
       1,
       targetHeight,

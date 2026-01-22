@@ -10,6 +10,8 @@ import axios from "axios";
 import { motion } from "framer-motion";
 
 const GOOGLEAPI = import.meta.env.VITE_GOOGLEAPI;
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://agrovision-server.onrender.com";
 
 const App = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -53,22 +55,18 @@ const App = () => {
     try {
       console.log("Uploading file:", file.name, "Size:", file.size);
 
-      const response = await axios.post(
-        "https://agrovision-h3fp.onrender.com/predict",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          timeout: 120000, // Increased to 120 seconds (2 minutes) for model inference
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            console.log(`Upload Progress: ${percentCompleted}%`);
-          },
-        }
-      );
+      const response = await axios.post(`${API_URL}/predict`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 120000, // Increased to 120 seconds (2 minutes) for model inference
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+          console.log(`Upload Progress: ${percentCompleted}%`);
+        },
+      });
 
       console.log("Server response:", response.data);
 
@@ -81,15 +79,16 @@ const App = () => {
     } catch (error) {
       console.error("Error uploading image:", error);
       let errorMessage = "Failed to process image";
-      
-      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-        errorMessage = "Request timed out. The image processing is taking longer than expected. Please try again with a smaller image or check your connection.";
+
+      if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
+        errorMessage =
+          "Request timed out. The image processing is taking longer than expected. Please try again with a smaller image or check your connection.";
       } else if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       console.error("Final error message:", errorMessage);
       alert(`Error in uploadImage: ${errorMessage}`);
       return null;
@@ -125,7 +124,7 @@ const App = () => {
     console.log("Top probability:", topProb, "at index:", topIndex);
     console.log("Second probability:", secondProb, "at index:", secondIndex);
 
-    // Disease labels
+    // Disease labels (10 classes to match model output)
     const diseaseLabels = [
       "Bacterial Leaf Blight",
       "Brown Spot",
@@ -136,6 +135,7 @@ const App = () => {
       "Neck_Blast",
       "Rice Hispa",
       "Sheath Blight",
+      "Tungro",
     ];
 
     const confidenceThreshold = 0.5;
@@ -145,7 +145,7 @@ const App = () => {
       // Check if top two are very close
       if (topProb - secondProb < closeThreshold) {
         console.log(
-          "Top two probabilities are close; considering second guess."
+          "Top two probabilities are close; considering second guess.",
         );
         return ` ${diseaseLabels[topIndex]} (${topProb.toFixed(6)})`;
       }
